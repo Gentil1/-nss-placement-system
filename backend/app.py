@@ -22,6 +22,15 @@ db.init_app(app)
 # which is fine for local development and a quick first deployment.
 allowed_origin = os.environ.get('ALLOWED_ORIGIN', '*')
 CORS(app, origins=allowed_origin)
+# Explicitly handle CORS preflight (OPTIONS) requests before Flask's normal
+# routing gets involved. Some hosts (including Render) can otherwise return
+# a 404 for OPTIONS on routes that only declare methods=['POST'] etc.,
+# which makes the browser block the real request before it's ever sent.
+@app.before_request
+def handle_preflight():
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        return response
 
 # Upload folder
 UPLOAD_FOLDER = 'uploads'
