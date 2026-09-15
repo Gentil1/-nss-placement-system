@@ -58,18 +58,13 @@ export default function MillionDollarVersion() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [appRes, orgRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/applicants`),
-          fetch(`${API_BASE_URL}/organizations`),
-        ]);
-        const appData = await appRes.json();
-        const orgData = await orgRes.json();
-        if (appData.success && orgData.success) {
-          const matchedCount = appData.data.filter(a => a.status === 'Matched').length;
+        const res = await fetch(`${API_BASE_URL}/public-stats`);
+        const data = await res.json();
+        if (data.success) {
           setStats({
-            applicants: appData.data.length,
-            organizations: orgData.data.length,
-            matched: matchedCount,
+            applicants: data.data.applicants,
+            organizations: data.data.organizations,
+            matched: data.data.matched,
           });
         }
       } catch (err) {
