@@ -505,6 +505,31 @@ def get_all_matches():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 
+@app.route('/api/matches/applicant/<int:applicant_id>', methods=['GET'])
+def get_matches_for_applicant(applicant_id):
+    """Get an applicant's own candidate matches, including the matched
+    organization's details. Intentionally public — this is what powers the
+    applicant-facing results page (/results?id=...) where a graduate checks
+    their own status without logging in."""
+    try:
+        matches = MatchResult.query.filter_by(applicant_id=applicant_id).order_by(MatchResult.rank).all()
+        result = []
+        for m in matches:
+            org = Organization.query.get(m.organization_id)
+            result.append({
+                'id': m.id,
+                'organization_id': m.organization_id,
+                'organization': org.to_dict() if org else None,
+                'match_score': m.match_score,
+                'explanation': m.explanation,
+                'rank': m.rank,
+                'status': m.status
+            })
+        return jsonify({'success': True, 'data': result, 'total': len(result)}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
 # ============================================
 # HEALTH CHECK
 # ============================================
@@ -517,6 +542,23 @@ def health_check():
         'message': 'NSS Backend is running!',
         'database': 'Connected'
     }), 200
+
+
+@app.route('/api/public-stats', methods=['GET'])
+def public_stats():
+    """Public, aggregate-only counts for the homepage — deliberately does
+    not expose any applicant or organization details, just totals."""
+    try:
+        return jsonify({
+            'success': True,
+            'data': {
+                'applicants': Applicant.query.count(),
+                'organizations': Organization.query.count(),
+                'matched': Applicant.query.filter_by(status='Matched').count()
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
 
 
 # ============================================
