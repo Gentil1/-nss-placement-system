@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from werkzeug.security import generate_password_hash
 
 class Config:
     """Base configuration"""
@@ -10,6 +11,16 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JSON_SORT_KEYS = False
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+
+    # Real admin authentication — password is never stored or compared in
+    # plaintext, only its hash. Override via environment variables in
+    # production (ADMIN_EMAIL, ADMIN_PASSWORD).
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@nss.com')
+    ADMIN_PASSWORD_HASH = os.environ.get(
+        'ADMIN_PASSWORD_HASH',
+        generate_password_hash(os.environ.get('ADMIN_PASSWORD', 'admin123'))
+    )
+    ADMIN_SESSION_LIFETIME = timedelta(hours=12)
 
 class DevelopmentConfig(Config):
     """Development configuration"""
