@@ -182,11 +182,6 @@ class EligibleGraduate(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
         class AdminSession(db.Model):
-    """
-    A real, server-side admin login session. Created on successful
-    /api/admin/login and checked by the require_admin_auth decorator on
-    every admin-only route.
-    """
     __tablename__ = 'admin_sessions'
 
     id = db.Column(db.Integer, primary_key=True)
