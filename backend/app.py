@@ -21,6 +21,17 @@ app.config.from_object(config[config_name])
 # Initialize extensions
 db.init_app(app)
 
+# Create database tables on startup. This must happen here (at import time),
+# not inside `if __name__ == '__main__'`, because production servers like
+# gunicorn (see Procfile: `web: gunicorn app:app`) import this file as a
+# module and never execute that block — so tables such as admin_sessions
+# were previously never being created in production, only when running
+# `python app.py` locally. db.create_all() is safe to call every time the
+# app starts: it only creates tables that don't already exist and never
+# touches or drops existing ones.
+with app.app_context():
+    db.create_all()
+
 # CORS: in production, set ALLOWED_ORIGIN to your deployed frontend's URL
 # (e.g. https://your-app.vercel.app). Falls back to allowing all origins,
 # which is fine for local development and a quick first deployment.
