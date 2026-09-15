@@ -29,7 +29,10 @@ export default function EligibleGraduatesTab() {
   const fetchGraduates = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/eligible-graduates`);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/eligible-graduates`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) setGraduates(data.data);
     } catch (err) {
@@ -61,9 +64,13 @@ export default function EligibleGraduatesTab() {
     setSaving(true);
     setError('');
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${API_BASE_URL}/eligible-graduates`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData)
       });
       const data = await response.json();
@@ -111,9 +118,13 @@ export default function EligibleGraduatesTab() {
     setSaving(true);
     setError('');
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${API_BASE_URL}/eligible-graduates/bulk`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ graduates: graduatesList })
       });
       const data = await response.json();
@@ -134,7 +145,11 @@ export default function EligibleGraduatesTab() {
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Remove "${name}" from the eligible list?`)) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/eligible-graduates/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/eligible-graduates/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) fetchGraduates();
     } catch (err) {
