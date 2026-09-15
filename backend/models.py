@@ -181,13 +181,13 @@ class EligibleGraduate(db.Model):
             'is_registered': self.is_registered,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-        class AdminSession(db.Model):
-    __tablename__ = 'admin_sessions'
-
-    id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(128), nullable=False, unique=True, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False)
-
-    def is_valid(self):
-        return datetime.utcnow() < self.expires_at
+class AdminSession(db.Model):
+····__tablename__ = 'admin_sessions'
+····
+····id = db.Column(db.Integer, primary_key=True)
+····token = db.Column(db.String(128), nullable=False, unique=True, index=True)
+····created_at = db.Column(db.DateTime, default=datetime.utcnow)
+····expires_at = db.Column(db.DateTime, nullable=False)
+····
+····def is_valid(self):
+········return datetime.utcnow() < self.expires_at
