@@ -73,9 +73,13 @@ export default function OrganizationsTab() {
     try {
       const url = editingId ? `${API_BASE_URL}/organizations/${editingId}` : `${API_BASE_URL}/organizations`;
       const method = editingId ? 'PUT' : 'POST';
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData)
       });
       const data = await response.json();
@@ -95,7 +99,11 @@ export default function OrganizationsTab() {
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/organizations/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/organizations/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) fetchOrganizations();
     } catch (err) {
