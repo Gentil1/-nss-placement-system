@@ -52,7 +52,10 @@ export default function AdminDashboard() {
 
   const fetchOrganizationsForSearch = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/organizations`);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/organizations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) setOrganizationsForSearch(data.data);
     } catch (err) {
@@ -78,7 +81,10 @@ export default function AdminDashboard() {
 
   const fetchEligibleGraduatesForActivity = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/eligible-graduates`);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/eligible-graduates`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) setEligibleGraduates(data.data);
     } catch (err) {
@@ -89,7 +95,11 @@ export default function AdminDashboard() {
   const handleGenerateMatches = async () => {
     setGeneratingMatches(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/matches/generate`, { method: 'POST' });
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/matches/generate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) {
         alert(data.message);
@@ -129,7 +139,10 @@ export default function AdminDashboard() {
   const fetchApplicants = async () => {
     try {
       setRefreshing(true);
-      const response = await fetch(`${API_BASE_URL}/applicants`);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/applicants`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) setApplicants(data.data);
     } catch (err) {
@@ -151,9 +164,13 @@ const handleUpdateApplicant = (updatedApplicant) => {
 
   const markAsMatched = async (applicant, organizationId) => {
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await fetch(`${API_BASE_URL}/applicants/${applicant.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status: 'Matched', matched_organization_id: organizationId })
       });
       const data = await response.json();
