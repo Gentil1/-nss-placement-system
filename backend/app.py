@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from config import config
-from models import db, Applicant, Organization, MatchResult, EligibleGraduate
+from models import db, Applicant, Organization, MatchResult, EligibleGraduate, AdminSession
 import os
+import secrets
+from datetime import datetime
+from functools import wraps
+from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 from matching import matching_engine
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -22,6 +26,7 @@ db.init_app(app)
 # which is fine for local development and a quick first deployment.
 allowed_origin = os.environ.get('ALLOWED_ORIGIN', '*')
 CORS(app, origins=allowed_origin)
+
 # Explicitly handle CORS preflight (OPTIONS) requests before Flask's normal
 # routing gets involved. Some hosts (including Render) can otherwise return
 # a 404 for OPTIONS on routes that only declare methods=['POST'] etc.,
@@ -44,6 +49,87 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB max file size
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# ============================================
+# ADMIN AUTHENTICATION
+# ============================================
+
+def require_admin_auth(f):
+    """
+    Real server-side authentication check. Every admin-only route below
+    is wrapped with this — it independently verifies the request's
+    Bearer token against the database on every single call. Nothing
+    about whether someone is "logged in" is ever decided by the browser.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header.replace('Bearer ', '').strip()
+
+        if not token:
+            return jsonify({'success': False, 'message': 'Authentication required'}), 401
+
+        session = AdminSession.query.filter_by(token=token).first()
+
+        if not session or not session.is_valid():
+            return jsonify({'success': False, 'message': 'Session expired or invalid. Please log in again.'}), 401
+
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    """Verify email + password hash server-side, and only on success
+    issue a genuine, randomly-generated session token stored in the database."""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        if email != app.config['ADMIN_EMAIL'] or not check_password_hash(app.config['ADMIN_PASSWORD_HASH'], password):
+            return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + app.config['ADMIN_SESSION_LIFETIME']
+
+        session = AdminSession(token=token, expires_at=expires_at)
+        db.session.add(session)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'token': token,
+            'email': email
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/admin/logout', methods=['POST'])
+@require_admin_auth
+def admin_logout():
+    """Invalidate the session token server-side, not just on the client."""
+    try:
+        auth_header = request.headers.get('Authorization', '')
+        token = auth_header.replace('Bearer ', '').strip()
+        session = AdminSession.query.filter_by(token=token).first()
+        if session:
+            db.session.delete(session)
+            db.session.commit()
+        return jsonify({'success': True, 'message': 'Logged out'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/admin/verify-session', methods=['GET'])
+@require_admin_auth
+def verify_session():
+    """Used on dashboard page load to confirm a stored token is still valid."""
+    return jsonify({'success': True, 'message': 'Session valid'}), 200
+
 
 # ============================================
 # APPLICANT ENDPOINTS
@@ -101,6 +187,7 @@ def create_applicant():
 
 
 @app.route('/api/applicants', methods=['GET'])
+@require_admin_auth
 def get_all_applicants():
     try:
         applicants = Applicant.query.all()
@@ -133,7 +220,8 @@ def get_all_applicants():
 
 @app.route('/api/applicants/<int:applicant_id>', methods=['GET'])
 def get_applicant(applicant_id):
-    """Get single applicant"""
+    """Get single applicant — intentionally public, used by the applicant-
+    facing results page where a graduate checks their own status by ID."""
     try:
         applicant = Applicant.query.get(applicant_id)
         if not applicant:
@@ -147,6 +235,7 @@ def get_applicant(applicant_id):
         return jsonify({'success': False, 'message': str(e)}), 400
     
 @app.route('/api/applicants/<int:applicant_id>', methods=['PUT'])
+@require_admin_auth
 def update_applicant(applicant_id):
     """Update an applicant (e.g. change status). If marking as Matched,
     also pass matched_organization_id to decrement that org's capacity."""
@@ -180,6 +269,7 @@ def update_applicant(applicant_id):
         return jsonify({'success': False, 'message': str(e)}), 400   
     
 @app.route('/api/eligible-graduates', methods=['POST'])
+@require_admin_auth
 def add_eligible_graduate():
     """Add a single eligible graduate (simulates a university submitting one record)"""
     try:
@@ -207,6 +297,7 @@ def add_eligible_graduate():
 
 
 @app.route('/api/eligible-graduates/bulk', methods=['POST'])
+@require_admin_auth
 def bulk_add_eligible_graduates():
     """Add many eligible graduates at once (simulates a university submitting its full list)"""
     try:
@@ -241,6 +332,7 @@ def bulk_add_eligible_graduates():
 
 
 @app.route('/api/eligible-graduates', methods=['GET'])
+@require_admin_auth
 def get_eligible_graduates():
     """List all eligible graduates (admin view)"""
     try:
@@ -251,6 +343,7 @@ def get_eligible_graduates():
 
 
 @app.route('/api/eligible-graduates/<int:grad_id>', methods=['DELETE'])
+@require_admin_auth
 def delete_eligible_graduate(grad_id):
     """Remove an eligible graduate record"""
     try:
@@ -298,6 +391,7 @@ def verify_eligibility():
 # ============================================
 
 @app.route('/api/organizations', methods=['POST'])
+@require_admin_auth
 def create_organization():
     """Create a new organization"""
     try:
@@ -322,6 +416,7 @@ def create_organization():
         return jsonify({'success': False, 'message': str(e)}), 400
 
 @app.route('/api/organizations/<int:org_id>', methods=['PUT'])
+@require_admin_auth
 def update_organization(org_id):
     """Update an organization"""
     try:
@@ -349,6 +444,7 @@ def update_organization(org_id):
 
 
 @app.route('/api/organizations/<int:org_id>', methods=['DELETE'])
+@require_admin_auth
 def delete_organization(org_id):
     """Delete an organization"""
     try:
@@ -363,7 +459,9 @@ def delete_organization(org_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
+
 @app.route('/api/organizations', methods=['GET'])
+@require_admin_auth
 def get_all_organizations():
     """Get all organizations"""
     try:
@@ -381,9 +479,8 @@ def get_all_organizations():
 # MATCH RESULTS ENDPOINTS
 # ============================================
 
-
-
 @app.route('/api/matches', methods=['GET'])
+@require_admin_auth
 def get_all_matches():
     """Get all matches"""
     try:
@@ -431,6 +528,7 @@ def internal_error(error):
 # ============================================
 
 @app.route('/api/init-db', methods=['POST'])
+@require_admin_auth
 def init_db():
     """Initialize database (create all tables)"""
     try:
@@ -448,6 +546,7 @@ def init_db():
 # ============================================
 
 @app.route('/api/matches/generate', methods=['POST'])
+@require_admin_auth
 def generate_all_matches():
     """Generate AI matches for all applicants AND automatically assign
     each applicant to their best available organization, respecting capacity."""
@@ -501,8 +600,6 @@ def generate_all_matches():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
-
-
 
 
 if __name__ == '__main__':
