@@ -1,14 +1,20 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
+
+
+def utc_now():
+    """Timezone-aware replacement for the deprecated datetime.utcnow()."""
+    return datetime.now(timezone.utc)
+
 
 class Applicant(db.Model):
     """Applicant Model"""
     __tablename__ = 'applicants'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # Personal Information
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
@@ -16,30 +22,30 @@ class Applicant(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     location = db.Column(db.String(100), nullable=False)
     preferred_region = db.Column(db.String(100), nullable=True)
-    
+
     # Academic Information
     university = db.Column(db.String(200), nullable=False)
     programme = db.Column(db.String(200), nullable=False)
     qualification = db.Column(db.String(50), nullable=False)  # Diploma, Bachelor, Master
-    
+
     # Skills (stored as comma-separated string)
     skills = db.Column(db.Text, default='')
-    
+
     # Interests (stored as comma-separated string)
     interests = db.Column(db.Text, default='')
-    
+
     # Career Goals
     career_goal = db.Column(db.Text, default='')
-    
+
     # Certificate File (stored as filename)
     certificate_filename = db.Column(db.String(300), nullable=True)
-    
+
     # Status
     status = db.Column(db.String(50), default='Pending')  # Pending, Under Review, Matched, Placed
     index_number = db.Column(db.String(50), nullable=True)
     matched_organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)
-    application_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    application_date = db.Column(db.DateTime, default=utc_now)
+
     def to_dict(self):
         """Convert applicant to dictionary"""
         return {
@@ -66,30 +72,30 @@ class Applicant(db.Model):
 class Organization(db.Model):
     """Organization Model"""
     __tablename__ = 'organizations'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # Organization Information
     name = db.Column(db.String(200), nullable=False, unique=True)
     industry = db.Column(db.String(100), nullable=False)
     location = db.Column(db.String(100), nullable=False)
     region = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, default='')
-    
+
     # Requirements (stored as comma-separated string)
     required_skills = db.Column(db.Text, default='')
     preferred_qualification = db.Column(db.String(100), default='')
-    
+
     # Positions Available
     positions_available = db.Column(db.Integer, default=1)
     positions_filled = db.Column(db.Integer, default=0)
-    
+
     # Contact Information
     contact_email = db.Column(db.String(120), nullable=False)
     contact_person = db.Column(db.String(100), default='')
-    
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
+    created_date = db.Column(db.DateTime, default=utc_now)
+
     def to_dict(self):
         """Convert organization to dictionary"""
         return {
@@ -112,31 +118,31 @@ class Organization(db.Model):
 class MatchResult(db.Model):
     """Match Result Model"""
     __tablename__ = 'match_results'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # Foreign Keys
     applicant_id = db.Column(db.Integer, db.ForeignKey('applicants.id'), nullable=False)
     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=False)
-    
+
     # Match Score (0-100)
     match_score = db.Column(db.Float, nullable=False)
-    
+
     # Explanation
     explanation = db.Column(db.Text, default='')
-    
+
     # Rank (1st match, 2nd match, etc)
     rank = db.Column(db.Integer, default=0)
-    
+
     # Status
     status = db.Column(db.String(50), default='Pending')  # Pending, Accepted, Rejected
-    
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
+    created_date = db.Column(db.DateTime, default=utc_now)
+
     # Relationships
     applicant = db.relationship('Applicant', backref='matches')
     organization = db.relationship('Organization', backref='matches')
-    
+
     def to_dict(self):
         """Convert match result to dictionary"""
         return {
@@ -150,13 +156,16 @@ class MatchResult(db.Model):
             'created_date': self.created_date.isoformat() if self.created_date else None,
             'organization': self.organization.to_dict() if self.organization else None,
         }
-        
+
+
 class EligibleGraduate(db.Model):
     """
     Represents a graduate submitted as eligible by their university —
     mirrors NSA's real process where universities submit verified
     graduate lists before students can register for service.
     """
+    __tablename__ = 'eligible_graduates'
+
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(200), nullable=False)
     index_number = db.Column(db.String(50), nullable=False, unique=True)
@@ -166,7 +175,7 @@ class EligibleGraduate(db.Model):
     gender = db.Column(db.String(20))
     graduation_status = db.Column(db.String(50), default='Completed')
     is_registered = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
 
     def to_dict(self):
         return {
@@ -181,13 +190,15 @@ class EligibleGraduate(db.Model):
             'is_registered': self.is_registered,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+
 class AdminSession(db.Model):
-····__tablename__ = 'admin_sessions'
-····
-····id = db.Column(db.Integer, primary_key=True)
-····token = db.Column(db.String(128), nullable=False, unique=True, index=True)
-····created_at = db.Column(db.DateTime, default=datetime.utcnow)
-····expires_at = db.Column(db.DateTime, nullable=False)
-····
-····def is_valid(self):
-········return datetime.utcnow() < self.expires_at
+    __tablename__ = 'admin_sessions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(128), nullable=False, unique=True, index=True)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    def is_valid(self):
+        return utc_now() < self.expires_at
