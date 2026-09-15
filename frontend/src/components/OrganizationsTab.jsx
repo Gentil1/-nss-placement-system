@@ -28,7 +28,10 @@ export default function OrganizationsTab() {
   const fetchOrganizations = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/organizations`);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/organizations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await response.json();
       if (data.success) setOrganizations(data.data);
     } catch (err) {
