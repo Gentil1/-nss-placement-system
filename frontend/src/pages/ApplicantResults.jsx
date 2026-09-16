@@ -156,21 +156,26 @@ export default function ApplicantResults() {
             </div>
 
             {/* Skills */}
-            {applicant.skills && applicant.skills.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-slate-700/30">
-                <p className="text-slate-400 text-xs font-semibold mb-3 flex items-center gap-2">
-                  <Award size={14} />
-                  Your Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {applicant.skills.map((skill, idx) => (
-                    <span key={idx} className="bg-cyan-500/20 text-cyan-300 px-4 py-2 rounded-full text-sm border border-cyan-400/50">
-                      {skill}
-                    </span>
-                  ))}
+            {(() => {
+              const skillsArr = Array.isArray(applicant.skills)
+                ? applicant.skills
+                : (applicant.skills ? applicant.skills.split(',').map(s => s.trim()).filter(Boolean) : []);
+              return skillsArr.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-700/30">
+                  <p className="text-slate-400 text-xs font-semibold mb-3 flex items-center gap-2">
+                    <Award size={14} />
+                    Your Skills
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {skillsArr.map((skill, idx) => (
+                      <span key={idx} className="bg-cyan-500/20 text-cyan-300 px-4 py-2 rounded-full text-sm border border-cyan-400/50">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}
