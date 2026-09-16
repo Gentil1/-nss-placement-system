@@ -194,9 +194,10 @@ const handleUpdateApplicant = (updatedApplicant) => {
 
   const skillsData = {};
   applicants.forEach(app => {
-    if (app.skills && Array.isArray(app.skills)) {
-      app.skills.forEach(skill => { skillsData[skill] = (skillsData[skill] || 0) + 1; });
-    }
+    const skillsArr = Array.isArray(app.skills)
+      ? app.skills
+      : (app.skills ? app.skills.split(',').map(s => s.trim()).filter(Boolean) : []);
+    skillsArr.forEach(skill => { skillsData[skill] = (skillsData[skill] || 0) + 1; });
   });
   const topSkills = Object.entries(skillsData).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 6);
 
@@ -589,10 +590,19 @@ const handleUpdateApplicant = (updatedApplicant) => {
                         <td className="py-4 px-4 text-sm" style={{ color: 'rgba(245,240,230,0.5)' }}>{app.programme}</td>
                         <td className="py-4 px-4">
                           <div className="flex gap-1 flex-wrap max-w-xs">
-                            {app.skills && app.skills.length > 0 ? app.skills.slice(0, 2).map((skill, idx) => (
-                              <span key={idx} className="px-2 py-1 rounded text-xs" style={{ backgroundColor: 'rgba(212,175,55,0.12)', color: GOLD }}>{skill}</span>
-                            )) : <span className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>—</span>}
-                            {app.skills && app.skills.length > 2 && <span className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>+{app.skills.length - 2}</span>}
+                            {(() => {
+                              const skillsArr = Array.isArray(app.skills)
+                                ? app.skills
+                                : (app.skills ? app.skills.split(',').map(s => s.trim()).filter(Boolean) : []);
+                              return skillsArr.length > 0 ? (
+                                <>
+                                  {skillsArr.slice(0, 2).map((skill, idx) => (
+                                    <span key={idx} className="px-2 py-1 rounded text-xs" style={{ backgroundColor: 'rgba(212,175,55,0.12)', color: GOLD }}>{skill}</span>
+                                  ))}
+                                  {skillsArr.length > 2 && <span className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>+{skillsArr.length - 2}</span>}
+                                </>
+                              ) : <span className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>—</span>;
+                            })()}
                           </div>
                         </td>
                         <td className="py-4 px-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>{app.status}</span></td>
