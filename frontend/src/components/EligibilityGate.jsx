@@ -89,7 +89,7 @@ export default function EligibilityGate({ onVerified }) {
                 type="text"
                 value={indexNumber}
                 onChange={(e) => setIndexNumber(e.target.value)}
-                placeholder="e.g. UG/CS/21/001"
+                placeholder="e.g. 01232099D"
                 className="w-full px-4 py-3 bg-[#F5F0E6]/5 border border-[#F5F0E6]/20 rounded-lg text-[#F5F0E6] placeholder-[#F5F0E6]/25 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition"
                 required
               />
