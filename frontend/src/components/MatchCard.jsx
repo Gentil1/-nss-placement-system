@@ -1,69 +1,70 @@
 import React, { useState } from 'react';
-import { Zap, Award, TrendingUp, ChevronDown } from 'lucide-react';
+import { Zap, Award, ChevronDown } from 'lucide-react';
+
+const NAVY = '#0B1739';
+const GOLD = '#D4AF37';
+const CREAM = '#F5F0E6';
 
 export default function MatchCard({ match, rank }) {
   const [expanded, setExpanded] = useState(false);
-  
-  const getScoreColor = (score) => {
-    if (score >= 80) return 'from-green-500 to-emerald-600';
-    if (score >= 60) return 'from-blue-500 to-cyan-600';
-    if (score >= 40) return 'from-amber-500 to-orange-600';
-    return 'from-red-500 to-pink-600';
+
+  const tier = (score) => {
+    if (score >= 80) return { label: 'Excellent Match', ring: GOLD, fill: GOLD, text: NAVY };
+    if (score >= 60) return { label: 'Good Match', ring: GOLD, fill: 'transparent', text: CREAM };
+    if (score >= 40) return { label: 'Moderate Match', ring: `${CREAM}60`, fill: 'transparent', text: CREAM };
+    return { label: 'Fair Match', ring: `${CREAM}35`, fill: 'transparent', text: CREAM };
   };
 
-  const getScoreLabel = (score) => {
-    if (score >= 80) return 'Excellent Match';
-    if (score >= 60) return 'Good Match';
-    if (score >= 40) return 'Moderate Match';
-    return 'Fair Match';
-  };
+  const t = tier(match.match_score);
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-2xl p-6 hover:border-blue-500/50 transition-all hover:shadow-lg hover:shadow-blue-500/20">
-      
+    <div
+      className="rounded-3xl p-6 backdrop-blur-xl transition-all"
+      style={{ backgroundColor: 'rgba(11,23,57,0.6)', border: '1px solid rgba(245,240,230,0.1)' }}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-4 flex-1">
-          {/* Rank Badge */}
-          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center font-bold text-lg">
+      <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+        <div className="flex items-center gap-4 flex-1 min-w-[200px]">
+          <div
+            className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm"
+            style={{ backgroundColor: 'rgba(212,175,55,0.12)', color: GOLD, border: '1px solid rgba(212,175,55,0.3)' }}
+          >
             #{rank}
           </div>
-          
-          {/* Organization Info */}
           <div>
-            <h3 className="text-xl font-bold text-white">{match.organization.name}</h3>
-            <p className="text-slate-400 text-sm">
-              {match.organization.industry} • {match.organization.location}
+            <h3 className="text-lg font-bold" style={{ color: CREAM, fontFamily: 'Georgia, serif' }}>
+              {match.organization.name}
+            </h3>
+            <p className="text-sm" style={{ color: `${CREAM}70` }}>
+              {match.organization.industry} · {match.organization.location}
             </p>
           </div>
         </div>
 
         {/* Score Circle */}
         <div className="flex-shrink-0 text-right">
-          <div className={`relative w-20 h-20 rounded-full bg-gradient-to-br ${getScoreColor(match.match_score)} flex items-center justify-center shadow-lg`}>
-            <div className="absolute inset-1 bg-slate-900 rounded-full flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-white">{match.match_score}%</p>
-                <p className="text-xs text-slate-300">Match</p>
-              </div>
+          <div
+            className="relative w-16 h-16 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: t.fill, border: `2px solid ${t.ring}` }}
+          >
+            <div className="text-center">
+              <p className="text-lg font-bold" style={{ color: t.text }}>{match.match_score}%</p>
             </div>
           </div>
-          <p className={`text-xs font-semibold mt-2 ${
-            match.match_score >= 80 ? 'text-green-400' :
-            match.match_score >= 60 ? 'text-blue-400' :
-            match.match_score >= 40 ? 'text-amber-400' :
-            'text-red-400'
-          }`}>
-            {getScoreLabel(match.match_score)}
+          <p className="text-xs font-semibold mt-2" style={{ color: t.ring }}>
+            {t.label}
           </p>
         </div>
       </div>
 
       {/* Why This Match */}
-      <div className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-4 mb-4">
+      <div
+        className="rounded-xl p-4 mb-4"
+        style={{ backgroundColor: 'rgba(245,240,230,0.04)', border: '1px solid rgba(245,240,230,0.08)' }}
+      >
         <div className="flex items-start gap-2">
-          <Zap size={18} className="text-blue-400 flex-shrink-0 mt-0.5" />
-          <p className="text-slate-300 text-sm leading-relaxed">
+          <Zap size={16} className="flex-shrink-0 mt-0.5" style={{ color: GOLD }} />
+          <p className="text-sm leading-relaxed" style={{ color: `${CREAM}90` }}>
             {match.explanation}
           </p>
         </div>
@@ -71,33 +72,39 @@ export default function MatchCard({ match, rank }) {
 
       {/* Organization Details */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-slate-800/50 rounded-lg p-3">
-          <p className="text-slate-400 text-xs mb-1">Industry</p>
-          <p className="text-white font-semibold text-sm">{match.organization.industry}</p>
+        <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(245,240,230,0.04)' }}>
+          <p className="text-xs mb-1" style={{ color: `${CREAM}55` }}>Industry</p>
+          <p className="font-semibold text-sm" style={{ color: CREAM }}>{match.organization.industry}</p>
         </div>
-        <div className="bg-slate-800/50 rounded-lg p-3">
-          <p className="text-slate-400 text-xs mb-1">Open Positions</p>
-          <p className="text-white font-semibold text-sm">{match.organization.positions_available}</p>
+        <div className="rounded-lg p-3" style={{ backgroundColor: 'rgba(245,240,230,0.04)' }}>
+          <p className="text-xs mb-1" style={{ color: `${CREAM}55` }}>Open Positions</p>
+          <p className="font-semibold text-sm" style={{ color: CREAM }}>{match.organization.positions_available}</p>
         </div>
       </div>
 
       {/* Required Skills */}
       <div className="mb-4">
-        <p className="text-slate-300 text-xs font-semibold mb-2 flex items-center gap-1">
-          <Award size={14} />
+        <p className="text-xs font-semibold mb-2 flex items-center gap-1" style={{ color: `${CREAM}70` }}>
+          <Award size={13} />
           Required Skills
         </p>
         <div className="flex flex-wrap gap-2">
-          {match.organization.required_skills && 
+          {match.organization.required_skills &&
             match.organization.required_skills.split(',').slice(0, 3).map((skill, idx) => (
-              <span key={idx} className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs border border-blue-400/50">
+              <span
+                key={idx}
+                className="px-3 py-1 rounded-full text-xs border"
+                style={{ backgroundColor: 'rgba(212,175,55,0.1)', color: GOLD, borderColor: 'rgba(212,175,55,0.3)' }}
+              >
                 {skill.trim()}
               </span>
             ))
           }
-          {match.organization.required_skills && 
+          {match.organization.required_skills &&
             match.organization.required_skills.split(',').length > 3 && (
-              <span className="text-slate-400 text-xs">+{match.organization.required_skills.split(',').length - 3} more</span>
+              <span className="text-xs self-center" style={{ color: `${CREAM}50` }}>
+                +{match.organization.required_skills.split(',').length - 3} more
+              </span>
             )
           }
         </div>
@@ -106,39 +113,45 @@ export default function MatchCard({ match, rank }) {
       {/* Expandable Details */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-blue-400 hover:text-blue-300 transition flex items-center justify-center gap-2 py-2 text-sm font-semibold"
+        className="w-full flex items-center justify-center gap-2 py-2 text-sm font-semibold transition"
+        style={{ color: `${CREAM}70` }}
+        onMouseEnter={(e) => e.currentTarget.style.color = GOLD}
+        onMouseLeave={(e) => e.currentTarget.style.color = `${CREAM}70`}
       >
         {expanded ? 'Hide Details' : 'View Details'}
-        <ChevronDown size={16} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown size={15} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
       {expanded && (
-        <div className="mt-4 pt-4 border-t border-slate-700/30 space-y-3">
+        <div className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid rgba(245,240,230,0.1)' }}>
           {match.organization.description && (
             <div>
-              <p className="text-slate-400 text-xs font-semibold mb-2">About Organization</p>
-              <p className="text-slate-300 text-sm leading-relaxed">{match.organization.description}</p>
+              <p className="text-xs font-semibold mb-2" style={{ color: `${CREAM}55` }}>About Organisation</p>
+              <p className="text-sm leading-relaxed" style={{ color: `${CREAM}85` }}>{match.organization.description}</p>
             </div>
           )}
-          
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-slate-400 text-xs font-semibold mb-1">Contact Email</p>
-              <a href={`mailto:${match.organization.contact_email}`} className="text-blue-400 hover:text-blue-300 text-sm break-all">
+              <p className="text-xs font-semibold mb-1" style={{ color: `${CREAM}55` }}>Contact Email</p>
+              <a href={`mailto:${match.organization.contact_email}`} className="text-sm break-all transition" style={{ color: GOLD }}>
                 {match.organization.contact_email}
               </a>
             </div>
             <div>
-              <p className="text-slate-400 text-xs font-semibold mb-1">Contact Person</p>
-              <p className="text-white text-sm">{match.organization.contact_person}</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: `${CREAM}55` }}>Contact Person</p>
+              <p className="text-sm" style={{ color: CREAM }}>{match.organization.contact_person}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Status Badge */}
-      <div className="mt-4 pt-4 border-t border-slate-700/30">
-        <span className="inline-block bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-xs font-semibold border border-green-400/50">
+      <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(245,240,230,0.1)' }}>
+        <span
+          className="inline-block px-3 py-1 rounded-full text-xs font-semibold border"
+          style={{ backgroundColor: 'rgba(212,175,55,0.1)', color: GOLD, borderColor: 'rgba(212,175,55,0.3)' }}
+        >
           ✓ {match.status}
         </span>
       </div>
