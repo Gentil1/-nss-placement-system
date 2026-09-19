@@ -246,7 +246,12 @@ export default function ApplicantResults() {
             <div className="space-y-6">
               {matches.map((match, idx) => (
                 <div key={match.id} className="rise-in" style={{ animationDelay: `${idx * 120}ms` }}>
-                  <MatchCard match={match} rank={idx + 1} />
+                  <MatchCard
+                    match={match}
+                    rank={idx + 1}
+                    isConfirmed={applicant.status === 'Matched' && match.organization_id === applicant.matched_organization_id}
+                    applicantIsMatched={applicant.status === 'Matched'}
+                  />
                 </div>
               ))}
             </div>
