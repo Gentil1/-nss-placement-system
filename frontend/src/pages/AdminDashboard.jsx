@@ -709,7 +709,18 @@ const handleUpdateApplicant = (updatedApplicant) => {
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-sm">
                               <div className="rounded p-2" style={{ backgroundColor: 'rgba(0,0,0,0.15)' }}><p className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>Positions</p><p className="font-semibold" style={{ color: CREAM }}>{match.organization.positions_available}</p></div>
-                              <div className="rounded p-2" style={{ backgroundColor: 'rgba(0,0,0,0.15)' }}><p className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>Status</p><p className="font-semibold capitalize" style={{ color: CREAM }}>{match.status}</p></div>
+                              <div className="rounded p-2" style={{ backgroundColor: 'rgba(0,0,0,0.15)' }}>
+                                <p className="text-xs" style={{ color: 'rgba(245,240,230,0.3)' }}>Status</p>
+                                {applicant.status === 'Matched' ? (
+                                  match.organization_id === applicant.matched_organization_id ? (
+                                    <p className="font-semibold" style={{ color: GOLD }}>✓ Confirmed</p>
+                                  ) : (
+                                    <p className="font-semibold" style={{ color: 'rgba(245,240,230,0.35)' }}>Not Selected</p>
+                                  )
+                                ) : (
+                                  <p className="font-semibold" style={{ color: CREAM }}>Pending Review</p>
+                                )}
+                              </div>
                             </div>
                             <div className="mt-3 pt-3 border-t text-xs" style={{ borderColor: 'rgba(245,240,230,0.08)', color: 'rgba(245,240,230,0.3)' }}><p>📧 {match.organization.contact_email}</p></div>
                           </div>
