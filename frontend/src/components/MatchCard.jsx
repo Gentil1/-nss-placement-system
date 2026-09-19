@@ -5,7 +5,7 @@ const NAVY = '#0B1739';
 const GOLD = '#D4AF37';
 const CREAM = '#F5F0E6';
 
-export default function MatchCard({ match, rank }) {
+export default function MatchCard({ match, rank, isConfirmed = false, applicantIsMatched = false }) {
   const [expanded, setExpanded] = useState(false);
 
   const tier = (score) => {
@@ -148,12 +148,28 @@ export default function MatchCard({ match, rank }) {
 
       {/* Status Badge */}
       <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(245,240,230,0.1)' }}>
-        <span
-          className="inline-block px-3 py-1 rounded-full text-xs font-semibold border"
-          style={{ backgroundColor: 'rgba(212,175,55,0.1)', color: GOLD, borderColor: 'rgba(212,175,55,0.3)' }}
-        >
-          ✓ {match.status}
-        </span>
+        {isConfirmed ? (
+          <span
+            className="inline-block px-3 py-1 rounded-full text-xs font-semibold border"
+            style={{ backgroundColor: 'rgba(212,175,55,0.15)', color: GOLD, borderColor: 'rgba(212,175,55,0.4)' }}
+          >
+            ✓ Confirmed Placement
+          </span>
+        ) : applicantIsMatched ? (
+          <span
+            className="inline-block px-3 py-1 rounded-full text-xs font-semibold border"
+            style={{ backgroundColor: 'rgba(245,240,230,0.05)', color: `${CREAM}50`, borderColor: 'rgba(245,240,230,0.15)' }}
+          >
+            Not Selected
+          </span>
+        ) : (
+          <span
+            className="inline-block px-3 py-1 rounded-full text-xs font-semibold border"
+            style={{ backgroundColor: 'rgba(212,175,55,0.1)', color: GOLD, borderColor: 'rgba(212,175,55,0.3)' }}
+          >
+            Pending Review
+          </span>
+        )}
       </div>
     </div>
   );
